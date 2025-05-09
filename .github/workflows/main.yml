@@ -18,7 +18,6 @@ jobs:
         # Download Tailscale
         $tailscaleUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
         $installerPath = "tailscale-installer.exe"
-
         # Ensure the file is downloaded successfully
         try {
           Invoke-WebRequest -Uri $tailscaleUrl -OutFile $installerPath
@@ -27,7 +26,6 @@ jobs:
           Write-Error "Failed to download Tailscale installer."
           exit 1
         }
-
         # Install Tailscale
         try {
           Start-Process -FilePath $installerPath -ArgumentList "/S" -Wait
@@ -36,14 +34,12 @@ jobs:
           Write-Error "Failed to install Tailscale."
           exit 1
         }
-
         # Add Tailscale to PATH
         $tailscalePath = "C:\Program Files\Tailscale\"
         if (-Not ($env:PATH -contains $tailscalePath)) {
           $env:PATH += ";$tailscalePath"
           Write-Output "Tailscale path added to PATH."
         }
-
         # Authenticate with Tailscale
         $Env:TAILSCALE_AUTH_KEY = "${{ secrets.TAILSCALE_AUTH_KEY }}"
         try {
@@ -53,7 +49,6 @@ jobs:
           Write-Error "Failed to authenticate with Tailscale."
           exit 1
         }
-
         # Verify Tailscale connection
         $tailscaleStatus = & "C:\Program Files\Tailscale\tailscale.exe" status
         Write-Output "Tailscale Status: $tailscaleStatus"
@@ -62,11 +57,9 @@ jobs:
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-
         # Retrieve user credentials from secrets
         $runnerUsername = "${{ secrets.RUNNER_USERNAME }}"
         $runnerPassword = ConvertTo-SecureString -AsPlainText "${{ secrets.RUNNER_PASSWORD }}" -Force
-
         # Create or update runneradmin user
         if (Get-LocalUser -Name $runnerUsername -ErrorAction SilentlyContinue) {
             Set-LocalUser -Name $runnerUsername -Password $runnerPassword
@@ -74,7 +67,6 @@ jobs:
             New-LocalUser -Name $runnerUsername -Password $runnerPassword -UserMayNotChangePassword -PasswordNeverExpires -AccountNeverExpires
             Add-LocalGroupMember -Group "Administrators" -Member $runnerUsername
         }
-
         # Keep the script running
         while ($true) {
           Start-Sleep -Seconds 300
@@ -84,4 +76,3 @@ jobs:
         TAILSCALE_AUTH_KEY: ${{ secrets.TAILSCALE_AUTH_KEY }}
         RUNNER_USERNAME: ${{ secrets.RUNNER_USERNAME }}
         RUNNER_PASSWORD: ${{ secrets.RUNNER_PASSWORD }}
-
